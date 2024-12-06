@@ -18,6 +18,21 @@ contract MicropayHashchain {
 
     error IncorrectAmount(uint256 sent, uint256 expected);
 
+    event ChannelCreated(
+        address indexed payer,
+        address indexed merchant,
+        uint256 amount,
+        uint256 numberOfTokens,
+        uint256 withdrawAfterBlocks
+    );
+    event ChannelRedeemed(
+        address indexed payer,
+        address indexed merchant,
+        uint256 amountPaid,
+        bytes32 finalHashValue,
+        uint256 numberOfTokensUsed
+    );
+
     constructor(address utilityAddress) {
         utility = Utility(utilityAddress);
     }
@@ -38,6 +53,14 @@ contract MicropayHashchain {
             numberOfTokens: numberOfTokens,
             withdrawAfterBlocks: withdrawAfterBlocks
         });
+
+        emit ChannelCreated(
+            msg.sender,
+            merchant,
+            amount,
+            numberOfTokens,
+            withdrawAfterBlocks
+        );
     }
 
     function redeemChannel(
@@ -64,6 +87,14 @@ contract MicropayHashchain {
         delete channelsMapping[payer][msg.sender];
         (bool sent, ) = payable(msg.sender).call{value: payableAmount}("");
         require(sent, "Failed to send Ether");
+
+        emit ChannelRedeemed(
+            payer,
+            msg.sender,
+            payableAmount,
+            finalHashValue,
+            numberOfTokensUsed
+        );
     }
 
     receive() external payable {}
